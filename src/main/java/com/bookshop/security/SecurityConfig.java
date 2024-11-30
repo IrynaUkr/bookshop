@@ -9,24 +9,24 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import lombok.AllArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
-
+@AllArgsConstructor
 public class SecurityConfig {
-//    private final UserDetailsService userDetailsService;
-//
-//    @Autowired
-//    public SecurityConfig(UserDetailsService personDetailsService) {
-//        this.userDetailsService = personDetailsService;
-//    }
+    private final JwtGenerator generator;
+    private final CustomUserDetailsService userDetailsService;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    //to store password as an encoded String
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -34,28 +34,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity.csrf(Customizer.withDefaults())
+        httpSecurity
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*")) // Exclude /auth/register from CSRF protection
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api").permitAll()
-                                .requestMatchers("/api/**")
-                                .authenticated()
+                        auth
+                                .requestMatchers("/auth/*") // Allow unauthenticated access to /auth/register
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated() // All other requests require authentication
                 )
-                .httpBasic(Customizer.withDefaults()).build();
+                .httpBasic(Customizer.withDefaults()); // Enable HTTP Basic authentication
+        httpSecurity.addFilterBefore(jwtAuthTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        return httpSecurity.build();
     }
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        UserDetails admin = User.builder()
-//                .password("123")
-//                .username("admin")
-//                .roles("ADMIN")
-//                .build();
-//        UserDetails user = User.builder()
-//                .password("12345")
-//                .username("user")
-//                .roles("USER")
-//                .build();
-//        return new InMemoryUserDetailsManager(admin, user);
-//    }
+    @Bean
+    public JwtAuthTokenFilter jwtAuthTokenFilter() {
+        return new JwtAuthTokenFilter(generator, userDetailsService);
+    }
 
 }
