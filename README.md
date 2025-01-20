@@ -1,3 +1,5 @@
+## Authentication
+
 A bearer token is a type of token that's used for authorization and authentication.
 JWTs are JSON-based security tokens that contain a user's identity and access rights. 
 When a user logs in, an authentication server generates a JWT,
@@ -31,5 +33,11 @@ However, this lacks the security guarantees and randomness of cryptographic Key 
 
 Using the SecretKey instance ensures the integrity and authenticity of JWT.
 
+##  Multithreaded Book Transfer Service
+
+
+#### Objective:
+Create a multithreaded service to transfer books from stock to a customer while maintaining the stock in a correct state. 
+Use synchronisation mechanisms to prevent race conditions.
 
 

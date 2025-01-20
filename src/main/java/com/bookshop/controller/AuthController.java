@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bookshop.dto.AuthResponseDto;
 import com.bookshop.dto.UserDto;
 import com.bookshop.model.Role;
-import com.bookshop.model.UserEntity;
+import com.bookshop.model.User;
 import com.bookshop.repository.RoleRepository;
 import com.bookshop.repository.UserRepository;
 import com.bookshop.security.JwtGenerator;
@@ -38,7 +38,7 @@ public class AuthController {
             return new ResponseEntity<>("username is taken", HttpStatus.BAD_REQUEST);
         }
 
-        UserEntity userEntity = new UserEntity();
+        User userEntity = new User();
         userEntity.setName(userDto.getUsername());
         userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
         Role role = roleRepository.getRoleByName("USER").orElseThrow(() -> new RuntimeException("Role not found"));
