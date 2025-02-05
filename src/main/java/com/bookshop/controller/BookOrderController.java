@@ -20,7 +20,7 @@ public class BookOrderController {
     public ResponseEntity<String> transferBooksBatch(@RequestBody BookOrderRequest request) {
         try {
             bookTransferService.transferBooks(request);
-            return ResponseEntity.ok("Batch order placed successfully.");
+            return ResponseEntity.ok("order placed successfully.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

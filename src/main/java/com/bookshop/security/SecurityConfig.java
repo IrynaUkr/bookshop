@@ -35,13 +35,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*")) // Exclude /auth/register from CSRF protection
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*", "/api/order/books")) // Exclude /auth/register from CSRF protection
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers("/auth/*") // Allow unauthenticated access to /auth/register
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated() // All other requests require authentication
+                                .requestMatchers("/api/order/books").permitAll()
+                                .requestMatchers("/auth/*").permitAll()
+                                .anyRequest().authenticated() // All other requests require authentication
                 )
                 .httpBasic(Customizer.withDefaults()); // Enable HTTP Basic authentication
         httpSecurity.addFilterBefore(jwtAuthTokenFilter(), UsernamePasswordAuthenticationFilter.class);

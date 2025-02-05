@@ -40,4 +40,10 @@ Using the SecretKey instance ensures the integrity and authenticity of JWT.
 Create a multithreaded service to transfer books from stock to a customer while maintaining the stock in a correct state. 
 Use synchronisation mechanisms to prevent race conditions.
 
+Use Case:
+- A customer can purchase one or more books.
+- Stock must be updated accurately for concurrent purchase requests.
+- If stock is insufficient, the purchase must fail.
+- All transactions should be thread-safe to handle multiple customers purchasing books simultaneously.
+
 

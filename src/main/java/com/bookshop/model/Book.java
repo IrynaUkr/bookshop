@@ -12,9 +12,9 @@ import lombok.Setter;
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
 
     private String title;
     private String author;
-    private int stockQuantity; // Current stock quantity
+    private int stock; // Current stock quantity
 }
