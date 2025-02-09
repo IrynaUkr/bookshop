@@ -1,9 +1,9 @@
-package com.bookshop.thread;
+package com.bookshop.concurrency;
 
 import com.bookshop.model.Book;
 import com.bookshop.model.User;
 
-public class SharedResource {
+public class SynchronizedSharedResource {
 
     public static void classMethod(String input) {
         synchronized (Book.class) {
@@ -30,7 +30,7 @@ public class SharedResource {
     }
 
     public static void main(String[] args) {
-        SharedResource sharedResource = new SharedResource();
+        SynchronizedSharedResource sharedResource = new SynchronizedSharedResource();
         Thread thread1 = new Thread(() -> classMethod("1111"));
         Thread thread2 = new Thread(() -> classMethod("22222"));
         Thread thread3 = new Thread(() -> sharedResource.methodA());

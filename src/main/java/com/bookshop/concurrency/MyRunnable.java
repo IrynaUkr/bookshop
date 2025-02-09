@@ -1,9 +1,8 @@
-package com.bookshop.thread;
+package com.bookshop.concurrency;
 
 public class MyRunnable implements Runnable {
     @Override
     public void run() {
-
         System.out.println(Thread.currentThread().getName());
     }
 
@@ -13,7 +12,5 @@ public class MyRunnable implements Runnable {
             Thread thread = new Thread(myRunnable);
             thread.start();
         }
-
-
     }
 }

@@ -1,14 +1,14 @@
-package com.bookshop.thread;
+package com.bookshop.concurrency;
 
-public class Account {
+public class SyncAccount {
     public int balance;
 
-    public Account(int balance) {
+    public SyncAccount(int balance) {
         this.balance = balance;
     }
 
     public static void main(String[] args) throws InterruptedException {
-        Account account = new Account(100000000);
+        SyncAccount account = new SyncAccount(10_000_000);
         Thread depositThread = new Thread(() -> {
             for (int i = 0; i < 10_000_000; i++) {
                 account.deposit(10);
@@ -16,7 +16,11 @@ public class Account {
         });
         Thread withdrowThread = new Thread(() -> {
             for (int i = 0; i < 10_000_000; i++) {
-                account.withdraw(10);
+                try {
+                    account.withdrowWhenEnoughMoney(10);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
         depositThread.start();
@@ -26,9 +30,10 @@ public class Account {
         System.out.println(account.balance);
     }
 
-    public void deposit(int amount) {
+    public synchronized void deposit(int amount) {
         checkAmountNotNegative(amount);
         balance += amount;
+        notifyAll();
     }
 
     public void withdraw(int amount) {
@@ -38,6 +43,14 @@ public class Account {
         } else {
             throw new IllegalArgumentException("not enough money");
         }
+    }
+
+    public synchronized void withdrowWhenEnoughMoney(int amount) throws InterruptedException {
+        checkAmountNotNegative(amount);
+        while (balance < amount) {
+            wait();
+        }
+        balance -= amount;
     }
 
     public void checkAmountNotNegative(int amount) {

@@ -1,4 +1,4 @@
-package com.bookshop.thread;
+package com.bookshop.concurrency;
 
 public class MyThread extends Thread{
     @Override

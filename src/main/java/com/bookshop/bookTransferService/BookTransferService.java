@@ -37,7 +37,7 @@ public class BookTransferService {
 
         try {
             for (Item item : request.getOrderItems()) {
-                // Lock per book
+                // Lock per book, the atomic method make sure that only one thread at a time will be allowed to i
                 Lock lock = bookLocks.computeIfAbsent(item.getBookId(), id -> new ReentrantLock());
 
                 // Acquire the lock before processing the book
