@@ -35,9 +35,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*", "/api/order/books")) // Exclude /auth/register from CSRF protection
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*","/api/order/books", "/api/order/books/*")) // Exclude /auth/register from CSRF protection
                 .authorizeHttpRequests(auth ->
                         auth
+                                .requestMatchers("/api/order/books/*").permitAll()
                                 .requestMatchers("/api/order/books").permitAll()
                                 .requestMatchers("/auth/*").permitAll()
                                 .anyRequest().authenticated() // All other requests require authentication
