@@ -58,7 +58,6 @@ public class BookTransferService {
             for (Item item : request.getOrderItems()) {
                 bookLocks.remove(item.getBookId());
             }
-            //To terminate the threads inside the ExecutorService you call its shutdown() method.
             // The ExecutorService will not shut down immediately, but it will no longer accept new tasks,
             // and once all threads have finished current tasks, the ExecutorService shuts down.
             // All tasks submitted to the ExecutorService before shutdown() is called, are executed.
@@ -72,7 +71,7 @@ public class BookTransferService {
         // Acquire the lock before processing the book
         lock.lock();
         try {
-            log.info("{} starts with book book item id {} and quantity {} processing --- ",
+            log.info("{} starts with book: item id {} and quantity {} processing --- ",
                     Thread.currentThread().getName(), item.getBookId(), item.getQuantity());
             Book book = bookRepository.findById(item.getBookId())
                     .orElseThrow(() -> new RuntimeException("Book not found: " + item.getBookId()));

@@ -19,6 +19,12 @@ Use Case:
 ##### 2. Fetch Book Recommendations in Parallel
   When a customer purchases a book, recommend related books. Fetching recommendations from a database
   or an external service might take time, so running this operation asynchronously improves performance.
+  - Customer places an order →  create an order in the database and update stock.
+  - Fetch book recommendations asynchronously while processing the order.
+  - Show recommendations before final checkout, allowing the customer to modify the order.
+  - If the customer updates the order, modify the existing order instead of creating a new one.
+
+
 
 
 

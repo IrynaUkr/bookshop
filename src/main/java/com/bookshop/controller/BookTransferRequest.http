@@ -1,0 +1,25 @@
+###
+POST http://localhost:8080/api/order/create
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "orderItems": [
+    {
+      "bookId": 7,
+      "quantity": 2
+    },
+    {
+      "bookId": 15,
+      "quantity": 1
+    },
+    {
+      "bookId": 24,
+      "quantity": 5
+    },
+    {
+      "bookId": 24,
+      "quantity": 5
+    }
+  ]
+}

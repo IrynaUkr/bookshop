@@ -30,7 +30,6 @@ public class BookTransferServiceFuture {
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
     private final OrderRepository orderRepository;
-    private final ItemRepository itemRepository;
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final ConcurrentHashMap<Integer, Lock> bookLocks = new ConcurrentHashMap<>();
 
