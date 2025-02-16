@@ -34,6 +34,7 @@ public class RecommendationService {
             countDownLatch.countDown();
             futureList.add(future);
         }
+
         // Wait for all tasks to complete with a timeout
         if (!countDownLatch.await(5, TimeUnit.SECONDS)) {
             log.info("not all recommendations were processed");

@@ -30,7 +30,7 @@ public class BookOrderController {
             bookTransferService.transferBooks(request);
             String recommendations = recommendationService.getRecommendations(request);
 
-            return ResponseEntity.ok("order placed successfully.Consider recommendations:" + recommendations);
+            return ResponseEntity.ok("order placed successfully.Consider recommendations: \n" + recommendations);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
