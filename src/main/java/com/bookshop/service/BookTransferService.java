@@ -82,10 +82,7 @@ public class BookTransferService {
             log.info("{} reducing the stock quantity ", Thread.currentThread().getName());
             book.setStock(book.getStock() - item.getQuantity());
             bookRepository.save(book);
-            Item orderItem = new Item();
-            orderItem.setOrder(parentOrder);
-            orderItem.setBookId(book.getId());
-            orderItem.setQuantity(item.getQuantity());
+            Item orderItem = getItem(item, parentOrder, book);
             orderItems.add(orderItem);
         } finally {
             // Release the lock
@@ -93,4 +90,11 @@ public class BookTransferService {
         }
     }
 
+    private static Item getItem(Item item, Order parentOrder, Book book) {
+        Item orderItem = new Item();
+        orderItem.setOrder(parentOrder);
+        orderItem.setBookId(book.getId());
+        orderItem.setQuantity(item.getQuantity());
+        return orderItem;
+    }
 }
