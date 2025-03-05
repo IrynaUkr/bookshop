@@ -1,0 +1,24 @@
+PUT http://localhost:8080/api/order/19
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "orderItems": [
+    {
+      "bookId": 1,
+      "quantity": 1
+    },
+    {
+      "bookId": 15,
+      "quantity": 1
+    },
+    {
+      "bookId": 24,
+      "quantity": 1
+    },
+    {
+      "bookId": 24,
+      "quantity": 2
+    }
+  ]
+}

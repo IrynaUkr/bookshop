@@ -6,8 +6,8 @@ Content-Type: application/json
   "userId": 1,
   "orderItems": [
     {
-      "bookId": 7,
-      "quantity": 2
+      "bookId": 1,
+      "quantity": 100
     },
     {
       "bookId": 15,

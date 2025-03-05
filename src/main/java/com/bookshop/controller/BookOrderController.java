@@ -2,7 +2,10 @@ package com.bookshop.controller;
 
 import java.util.concurrent.CompletableFuture;
 import com.bookshop.dto.BookOrderRequest;
-import com.bookshop.model.Order;
+import com.bookshop.dto.OrderDto;
+import com.bookshop.exception.InsufficientStockException;
+import com.bookshop.exception.OrderNotFoundException;
+import com.bookshop.exception.ProductNotFoundException;
 import com.bookshop.service.OrderService;
 import com.bookshop.service.RecommendationService;
 import lombok.AllArgsConstructor;
@@ -26,23 +29,43 @@ public class BookOrderController {
     private final OrderService orderService;
     private final RecommendationService recommendationService;
 
+    private static ResponseEntity<OrderDto> getOrderDtoWithErrorResponseEntity(Throwable ex) {
+        HttpStatus status;
+        String errorMessage;
+        if (ex.getCause() instanceof InsufficientStockException) {
+            status = HttpStatus.BAD_REQUEST;
+            errorMessage = ex.getCause().getMessage();
+        } else if (ex.getCause() instanceof OrderNotFoundException || ex.getCause() instanceof ProductNotFoundException) {
+            status = HttpStatus.NOT_FOUND;
+            errorMessage = ex.getCause().getMessage();
+        } else {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            errorMessage = " An unexpected error occurred.";
+        }
+        OrderDto errorOrder = new OrderDto();
+        errorOrder.setErrorDetails(status.getReasonPhrase() + errorMessage);
+
+        ResponseEntity<OrderDto> body = ResponseEntity.status(status).body(errorOrder);
+        return body;
+    }
+
     @PostMapping
-    public CompletableFuture<ResponseEntity<Order>> createOrder(@RequestBody BookOrderRequest orderRequest) {
-        log.info("BookOrderRequest received " + orderRequest);
+    public CompletableFuture<ResponseEntity<OrderDto>> createOrder(@RequestBody BookOrderRequest orderRequest) {
+        log.info("new book order request received : [ {}]", orderRequest);
         return orderService.createOrder(orderRequest)
                 .thenApply(ResponseEntity::ok)
+
                 .exceptionally(ex -> {
                     log.error("Error processing order: {}", ex.getMessage());
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(null);
+                    return getOrderDtoWithErrorResponseEntity(ex);
                 });
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrder(@PathVariable Integer id) {
+    public ResponseEntity<OrderDto> getOrder(@PathVariable Integer id) {
         log.info("get order by id {} received", id);
         try {
-            return new ResponseEntity<>(orderService.getOrder(id), HttpStatus.OK);
+            return new ResponseEntity<>(orderService.getOrderById(id), HttpStatus.OK);
         } catch (Exception e) {
             log.error("Order was not found: {}", e.getMessage());
         }
@@ -51,9 +74,10 @@ public class BookOrderController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Integer id) {
-        log.info("delete order by id {} received", id);
+        log.info("Delete order by id {} received", id);
         try {
             orderService.deleteOrder(id);
+            log.info("Order with id {}  was deleted  ", id);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             log.error("Order was not deleted: {}", e.getMessage());
@@ -61,16 +85,14 @@ public class BookOrderController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PutMapping
-    public CompletableFuture<ResponseEntity<Order>> updateOrder(@RequestBody BookOrderRequest orderRequest,
-                                                                @PathVariable Integer orderId) {
+    @PutMapping("/{id}")
+    public CompletableFuture<ResponseEntity<OrderDto>> updateOrder(@RequestBody BookOrderRequest orderRequest, @PathVariable Integer id) {
         log.info("Update bookOrderRequest received");
-        return orderService.updateOrder(orderId, orderRequest)
+        return orderService.updateOrder(id, orderRequest)
                 .thenApply(ResponseEntity::ok)
                 .exceptionally(ex -> {
                     log.error("Error updating order: {}", ex.getMessage());
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(null);
+                    return getOrderDtoWithErrorResponseEntity(ex);
                 });
     }
 

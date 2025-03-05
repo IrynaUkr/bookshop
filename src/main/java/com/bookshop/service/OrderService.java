@@ -4,7 +4,6 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,11 +12,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import com.bookshop.dto.BookOrderRequest;
+import com.bookshop.dto.OrderDto;
+import com.bookshop.exception.InsufficientStockException;
+import com.bookshop.exception.OrderNotFoundException;
+import com.bookshop.exception.ProductNotFoundException;
+import com.bookshop.mapper.OrderDtoMapper;
 import com.bookshop.model.Book;
 import com.bookshop.model.Item;
 import com.bookshop.model.Order;
@@ -26,11 +28,13 @@ import com.bookshop.repository.BookRepository;
 import com.bookshop.repository.OrderRepository;
 import com.bookshop.repository.UserRepository;
 import jakarta.annotation.PreDestroy;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 @Service
 @AllArgsConstructor
 @Slf4j
+@Transactional
 public class OrderService {
 
     private final UserRepository userRepository;
@@ -38,6 +42,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
     private final ConcurrentHashMap<Integer, Lock> bookLocks = new ConcurrentHashMap<>();
+    private final OrderDtoMapper orderDtoMapper;
 
     private static CompletableFuture<List<Item>> getListCompletableFuture(List<CompletableFuture<Item>> orderItemFutures) {
         return CompletableFuture.allOf(orderItemFutures.toArray(new CompletableFuture[0]))
@@ -47,30 +52,38 @@ public class OrderService {
                 .orTimeout(5, TimeUnit.SECONDS)
                 .exceptionally(ex -> {
                     log.error("Order processing timed out: {}", ex.getMessage());
-                    throw new RuntimeException("Order processing took too long");
+                    throw new RuntimeException("Order processing error : " + ex.getMessage());
                 });
     }
 
-    public CompletableFuture<Order> createOrder(BookOrderRequest bookOrderRequest) {
+    public CompletableFuture<OrderDto> createOrder(BookOrderRequest bookOrderRequest) {
 
         List<CompletableFuture<Item>> orderItemFutures = normaliseOrderedItems(bookOrderRequest.getOrderItems())
                 .stream()
+                ///synchronized processing
                 .map(item -> supplyAsync(() -> processBookItem(item), executorService))
                 .toList();
 
         CompletableFuture<List<Item>> allOrderItemsFuture = getListCompletableFuture(orderItemFutures);
 
         return allOrderItemsFuture.thenApply(orderItems -> {
-            Order order = new Order();
-            User user = userRepository.getUserById(bookOrderRequest.getUserId()).orElseThrow();
-            order.setUser(user);
-            order.setOrderDate(LocalDateTime.now());
-            order.setItems(orderItems);
+            Order order = getOrderById(bookOrderRequest, orderItems);
             orderRepository.save(order);
-            log.info("order was processed {} with thread: {}", order.getItems(), Thread.currentThread().getName());
             log.info("order was processed {} with thread: {}", order, Thread.currentThread().getName());
-            return order;
+            return orderDtoMapper.mapOrderDto(order);
         }).orTimeout(10, TimeUnit.SECONDS);
+    }
+
+    private Order getOrderById(BookOrderRequest bookOrderRequest, List<Item> orderItems) {
+        Order order = new Order();
+        User user = userRepository.getUserById(bookOrderRequest.getUserId()).orElseThrow();
+        order.setUser(user);
+        order.setOrderDate(LocalDateTime.now());
+        order.setItems(orderItems);
+        for (Item item : orderItems) {
+            item.setOrder(order);
+        }
+        return order;
     }
 
     private Item processBookItem(Item item) {
@@ -99,16 +112,17 @@ public class OrderService {
         return item;
     }
 
-    public Order getOrder(Integer orderId) {
-        return orderRepository.findById(orderId).orElseThrow();
+    public OrderDto getOrderById(Integer orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        return orderDtoMapper.mapOrderDto(order);
     }
 
     public void deleteOrder(Integer orderId) {
         orderRepository.deleteById(orderId);
     }
 
-    public CompletableFuture<Order> updateOrder(Integer orderId, BookOrderRequest bookOrderRequest) {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("order not found"));
+    public CompletableFuture<OrderDto> updateOrder(Integer orderId, BookOrderRequest bookOrderRequest) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException("order not found"));
         List<Item> existingItems = order.getItems();
         List<CompletableFuture<Item>> orderItemFutures = normaliseOrderedItems(bookOrderRequest.getOrderItems())
                 .stream()
@@ -119,10 +133,13 @@ public class OrderService {
 
         return allOrderItemsFuture.thenApply(orderItems -> {
             order.setOrderDate(LocalDateTime.now());
+            for (Item item : orderItems) {
+                item.setOrder(order);
+            }
             order.setItems(orderItems);
             orderRepository.save(order);
             log.info("order was updated {} by thread: {}", order, Thread.currentThread().getName());
-            return order;
+            return orderDtoMapper.mapOrderDto(order);
         }).orTimeout(10, TimeUnit.SECONDS);
     }
 
@@ -147,7 +164,10 @@ public class OrderService {
         int stockAdjustment = existingItem.getQuantity() - requestedItem.getQuantity();
         Book book = bookRepository.findById(existingItem.getBookId()).orElseThrow();
         if (book.getStock() + existingItem.getQuantity() < requestedItem.getQuantity()) {
-            throw new RuntimeException("Insufficient stock for book: " + book.getTitle());
+            throw new InsufficientStockException("Insufficient stock for book: " + book.getTitle()
+                    + "requested" + requestedItem.getQuantity()
+                    + "in old  order" + existingItem.getQuantity()
+                    + "in stock" + book.getStock());
         }
         book.setStock(book.getStock() + stockAdjustment);
         bookRepository.save(book);
