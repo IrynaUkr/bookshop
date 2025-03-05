@@ -34,17 +34,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*","/api/order/create", "/api/order/create/*")) // Exclude /auth/register from CSRF protection
-                .authorizeHttpRequests(auth ->
-                        auth
-                                .requestMatchers("/api/order/create/*").permitAll()
-                                .requestMatchers("/api/order/create").permitAll()
-                                .requestMatchers("/auth/*").permitAll()
-                                .anyRequest().authenticated() // All other requests require authentication
-                )
-                .httpBasic(Customizer.withDefaults()); // Enable HTTP Basic authentication
-        httpSecurity.addFilterBefore(jwtAuthTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.csrf(csrf -> csrf.disable());
+        //httpSecurity
+        //        .csrf(csrf -> csrf.ignoringRequestMatchers("/auth/*","/api/order/", "/api/order/*"))
+        //        // Exclude /auth/register from CSRF protection
+        //        .authorizeHttpRequests(auth ->
+        //                auth
+        //                        .requestMatchers("/api/order/").permitAll()
+        //                        .requestMatchers("/api/order/*").permitAll()
+        //                        .requestMatchers("/auth/*").permitAll()
+        //                        .anyRequest().authenticated()
+        //                // All other requests require authentication
+        //        )
+        //        .httpBasic(Customizer.withDefaults());
+        //// Enable HTTP Basic authentication
+        //httpSecurity.addFilterBefore(jwtAuthTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 

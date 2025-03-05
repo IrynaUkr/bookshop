@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
 @Setter
@@ -17,6 +18,7 @@ public class User {
     private int id;
     private String name;
     private String password;
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "user_roles",

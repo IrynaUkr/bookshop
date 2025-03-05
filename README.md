@@ -15,6 +15,9 @@ Use Case:
 - Stock must be updated accurately for concurrent purchase requests.
 - If stock is insufficient, the purchase must fail.
 - All transactions should be thread-safe to handle multiple customers purchasing books simultaneously.
+- Cancels long-running tasks if they exceed 5 seconds for books, or 10 seconds for the full order.
+- Throws an error if the timeout is exceeded.
+- Use CompletableFuture, which gives better non-blocking execution and chaining capabilities.
 
 ##### 2. Fetch Book Recommendations in Parallel
   When a customer purchases a book, recommend related books. Fetching recommendations from a database

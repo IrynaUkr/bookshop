@@ -22,4 +22,12 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<Item> items;
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "user=" + user.getName() +
+                ", orderDate=" + orderDate +
+                '}';
+    }
 }

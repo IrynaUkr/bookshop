@@ -41,7 +41,7 @@ public class AuthController {
         User userEntity = new User();
         userEntity.setName(userDto.getUsername());
         userEntity.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        Role role = roleRepository.getRoleByName("USER").orElseThrow(() -> new RuntimeException("Role not found"));
+        Role role = roleRepository.getRoleByName("customer").orElseThrow(() -> new RuntimeException("Role not found"));
         userEntity.setRoles(Collections.singletonList(role));
         userRepository.save(userEntity);
 
