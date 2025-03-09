@@ -15,9 +15,9 @@ import lombok.Setter;
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
-    private int bookId;
+    private Long bookId;
     private int quantity;
 
     @ManyToOne(cascade = CascadeType.ALL)

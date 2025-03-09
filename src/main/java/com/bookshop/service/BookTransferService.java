@@ -31,16 +31,15 @@ public class BookTransferService {
     private final UserRepository useRepository;
     private final BookRepository bookRepository;
     private final OrderRepository orderRepository;
-    private final ItemRepository itemRepository;
     // Thread pool for processing book orders
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
     // Lock map to manage locks per book
-    private final ConcurrentHashMap<Integer, Lock> bookLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Lock> bookLocks = new ConcurrentHashMap<>();
 
 
     public void transferBooks(BookOrderRequest request) {
         Order parentOrder = new Order();
-        User user = useRepository.getUserById(request.getUserId()).orElseThrow();
+        User user = useRepository.findById(request.getUserId()).orElseThrow();
         parentOrder.setUser(user);
         parentOrder.setOrderDate(LocalDateTime.now());
 

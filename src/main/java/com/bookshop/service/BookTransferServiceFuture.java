@@ -6,7 +6,6 @@ import com.bookshop.model.Item;
 import com.bookshop.model.Order;
 import com.bookshop.model.User;
 import com.bookshop.repository.BookRepository;
-import com.bookshop.repository.ItemRepository;
 import com.bookshop.repository.OrderRepository;
 import com.bookshop.repository.UserRepository;
 import jakarta.annotation.PreDestroy;
@@ -31,11 +30,11 @@ public class BookTransferServiceFuture {
     private final BookRepository bookRepository;
     private final OrderRepository orderRepository;
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
-    private final ConcurrentHashMap<Integer, Lock> bookLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Lock> bookLocks = new ConcurrentHashMap<>();
 
     public void transferBooks(BookOrderRequest request) {
         Order parentOrder = new Order();
-        User user = userRepository.getUserById(request.getUserId()).orElseThrow();
+        User user = userRepository.findById(request.getUserId()).orElseThrow();
         parentOrder.setUser(user);
         parentOrder.setOrderDate(LocalDateTime.now());
 

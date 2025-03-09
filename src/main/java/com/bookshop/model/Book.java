@@ -16,7 +16,7 @@ import lombok.Setter;
 public class Book implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     private String title;
     private String author;
@@ -25,7 +25,7 @@ public class Book implements Serializable {
 
     @Override
     public String toString() {
-        return "title: "+getTitle() + " author: " + getAuthor() + " genre: " + getGenre();
+        return "title: " + getTitle() + " author: " + getAuthor() + " genre: " + getGenre() + "stock: " + getStock();
     }
 
 }

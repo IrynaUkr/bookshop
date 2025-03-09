@@ -45,8 +45,7 @@ public class BookOrderController {
         OrderDto errorOrder = new OrderDto();
         errorOrder.setErrorDetails(status.getReasonPhrase() + errorMessage);
 
-        ResponseEntity<OrderDto> body = ResponseEntity.status(status).body(errorOrder);
-        return body;
+        return ResponseEntity.status(status).body(errorOrder);
     }
 
     @PostMapping
@@ -62,10 +61,10 @@ public class BookOrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> getOrder(@PathVariable Integer id) {
+    public ResponseEntity<OrderDto> getOrder(@PathVariable Long id) {
         log.info("get order by id {} received", id);
         try {
-            return new ResponseEntity<>(orderService.getOrderById(id), HttpStatus.OK);
+            return new ResponseEntity<>(orderService.getOrder(id), HttpStatus.OK);
         } catch (Exception e) {
             log.error("Order was not found: {}", e.getMessage());
         }
@@ -73,7 +72,7 @@ public class BookOrderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         log.info("Delete order by id {} received", id);
         try {
             orderService.deleteOrder(id);
@@ -86,7 +85,8 @@ public class BookOrderController {
     }
 
     @PutMapping("/{id}")
-    public CompletableFuture<ResponseEntity<OrderDto>> updateOrder(@RequestBody BookOrderRequest orderRequest, @PathVariable Integer id) {
+    public CompletableFuture<ResponseEntity<OrderDto>> updateOrder(@RequestBody BookOrderRequest orderRequest,
+                                                                   @PathVariable Long id) {
         log.info("Update bookOrderRequest received");
         return orderService.updateOrder(id, orderRequest)
                 .thenApply(ResponseEntity::ok)
