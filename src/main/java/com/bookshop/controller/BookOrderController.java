@@ -1,6 +1,7 @@
 package com.bookshop.controller;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import com.bookshop.dto.BookOrderRequest;
 import com.bookshop.dto.OrderDto;
 import com.bookshop.exception.InsufficientStockException;
@@ -49,15 +50,14 @@ public class BookOrderController {
     }
 
     @PostMapping
-    public CompletableFuture<ResponseEntity<OrderDto>> createOrder(@RequestBody BookOrderRequest orderRequest) {
+    public ResponseEntity<OrderDto> createOrder(@RequestBody BookOrderRequest orderRequest) {
         log.info("new book order request received : [ {}]", orderRequest);
-        return orderService.createOrder(orderRequest)
-                .thenApply(ResponseEntity::ok)
-
-                .exceptionally(ex -> {
-                    log.error("Error processing order: {}", ex.getMessage());
-                    return getOrderDtoWithErrorResponseEntity(ex);
-                });
+        try {
+            return new ResponseEntity<>(orderService.createOrder(orderRequest), HttpStatus.CREATED);
+        } catch (ExecutionException | InterruptedException e) {
+            log.error("Order was not created: {}", e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
     }
 
     @GetMapping("/{id}")

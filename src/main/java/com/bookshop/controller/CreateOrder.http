@@ -6,12 +6,12 @@ Content-Type: application/json
   "userId": 1,
   "orderItems": [
     {
-      "bookId": 1,
-      "quantity": 10
+      "bookId": 3,
+      "quantity": 8
     },
     {
-      "bookId": 2,
-      "quantity": 10
+      "bookId": 4,
+      "quantity": 9
     }
   ]
 }

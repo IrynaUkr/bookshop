@@ -4,11 +4,13 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +31,7 @@ import com.bookshop.repository.BookRepository;
 import com.bookshop.repository.OrderRepository;
 import com.bookshop.repository.UserRepository;
 import jakarta.annotation.PreDestroy;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 @Service
@@ -55,7 +58,8 @@ public class OrderService {
                 });
     }
 
-    public CompletableFuture<OrderDto> createOrder(BookOrderRequest bookOrderRequest) {
+    @Transactional
+    public OrderDto createOrder(BookOrderRequest bookOrderRequest) throws ExecutionException, InterruptedException {
         List<CompletableFuture<Item>> orderItemFutures = normaliseOrderedItems(bookOrderRequest.getOrderItems())
                 .stream()
                 .map(item -> supplyAsync(() -> processBookItem(item), executorService))
@@ -68,7 +72,7 @@ public class OrderService {
             orderRepository.save(order);
             log.info("order was processed {} with thread: {}", order, Thread.currentThread().getName());
             return orderDtoMapper.mapOrderDto(order);
-        }).orTimeout(10, TimeUnit.SECONDS);
+        }).orTimeout(10, TimeUnit.SECONDS).get();
     }
 
     private Order createNewOrder(BookOrderRequest bookOrderRequest, List<Item> orderItems) {
@@ -124,6 +128,7 @@ public class OrderService {
         List<Item> existingItems = order.getItems();
         List<Item> orderedItems = normaliseOrderedItems(bookOrderRequest.getOrderItems());
         List<Item> updatedExistingItems = deleteNotOrderedItems(existingItems, orderedItems);
+        order.setItems(updatedExistingItems);
 
         List<CompletableFuture<Item>> orderItemFutures = orderedItems
                 .stream()
@@ -144,9 +149,13 @@ public class OrderService {
     private List<Item> deleteNotOrderedItems(List<Item> existingItems, List<Item> orderedItems) {
         log.info("remove not ordered items---->");
         List<Item> updatedList = new ArrayList<>();
-        HashSet<Item> orderedItemSet = new HashSet<>(orderedItems);
+        HashMap<Long, Item> orderedItemMap = new HashMap<>();
+        for(Item item : orderedItems) {
+            orderedItemMap.put(item.getBookId(), item);
+        }
+
         for (Item item : existingItems) {
-            if (orderedItemSet.contains(item)) {
+            if ( !orderedItemMap.containsKey(item.getId())) {
                 updatedList.add(item);
             } else {
                 Lock lock = bookLocks.computeIfAbsent(item.getBookId(), id -> new ReentrantLock());
@@ -174,9 +183,11 @@ public class OrderService {
         try {
             Item existingItem = getExistingItemWithRequestedItemId(requestedItem, existingItems);
             log.info("the existing item {} ", existingItem);
+
             if (existingItem == null) {
                 return updateBookStock(requestedItem);
             } else {
+                existingItem.setQuantity(requestedItem.getQuantity());
                 return adjustBookStock(requestedItem, existingItem);
             }
         } finally {
