@@ -25,14 +25,8 @@ public class BookOrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<OrderDto> createOrder(@RequestBody BookOrderRequest orderRequest) {
-        log.info("new book order request received : [ {}]", orderRequest);
-        try {
-            return new ResponseEntity<>(orderService.createOrder(orderRequest), HttpStatus.CREATED);
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Order was not created: {}", e.getMessage());
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+    public ResponseEntity<OrderDto> createOrder(@RequestBody BookOrderRequest orderRequest) throws ExecutionException, InterruptedException {
+        return new ResponseEntity<>(orderService.createOrder(orderRequest), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -66,8 +60,9 @@ public class BookOrderController {
         try {
             return new ResponseEntity<>(orderService.updateOrder(id, orderRequest), HttpStatus.OK);
         } catch (ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e);
+            log.error("Order was not modified: {}", e.getMessage());
         }
+        return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
     }
 
 }

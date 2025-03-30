@@ -22,6 +22,7 @@ import com.bookshop.dto.BookOrderRequest;
 import com.bookshop.dto.OrderDto;
 import com.bookshop.exception.InsufficientStockException;
 import com.bookshop.exception.OrderNotFoundException;
+import com.bookshop.exception.ProductNotFoundException;
 import com.bookshop.mapper.OrderDtoMapper;
 import com.bookshop.model.Book;
 import com.bookshop.model.Item;
@@ -54,10 +55,21 @@ public class OrderService {
                         .map(CompletableFuture::join)
                         .collect(Collectors.toList()))
                 .orTimeout(5, TimeUnit.SECONDS)
-                .exceptionally(ex -> {
-                    log.error("Order processing exception: {}", ex.getMessage());
-                    throw new RuntimeException("Order processing error : " + ex.getMessage());
-                });
+                .exceptionally(OrderService::handleException);
+    }
+
+    private static List<Item> handleException(Throwable ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof ProductNotFoundException) {
+            log.error("Order processing ProductNotFoundException: {}", cause.getMessage());
+            throw (ProductNotFoundException) cause;
+        }
+        if (cause instanceof InsufficientStockException) {
+            log.error("Order processing InsufficientStockException: {}", cause.getMessage());
+            throw (InsufficientStockException) cause;
+        }
+        log.error("Order processing exception: {}", ex.getMessage());
+        throw new RuntimeException("Order processing error: " + ex.getMessage());
     }
 
     @Transactional
@@ -147,7 +159,7 @@ public class OrderService {
     }
 
     private Item updateBookStock(Item item) {
-        Book book = bookRepository.findById(item.getBookId()).orElseThrow();
+        Book book = bookRepository.findById(item.getBookId()).orElseThrow(() -> new ProductNotFoundException("Book with requested id not found"));
         if (book.getStock() < item.getQuantity()) {
             throw new InsufficientStockException("Insufficient stock for book: " + book.getTitle());
         }
@@ -172,7 +184,8 @@ public class OrderService {
     @Transactional
     public OrderDto createOrder(BookOrderRequest bookOrderRequest) throws ExecutionException, InterruptedException {
         List<CompletableFuture<Item>> orderItemFutures = normaliseOrderedItems(bookOrderRequest.getOrderItems())
-                .stream().map(item -> supplyAsync(() -> processBookItem(item), executorService)).toList();
+                .stream()
+                .map(item -> supplyAsync(() -> processBookItem(item), executorService)).toList();
 
         CompletableFuture<List<Item>> allOrderItemsFuture = getListCompletableFuture(orderItemFutures);
 
