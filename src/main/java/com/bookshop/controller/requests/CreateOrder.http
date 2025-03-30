@@ -7,10 +7,10 @@ Content-Type: application/json
   "orderItems": [
     {
       "bookId": 11,
-      "quantity": 100000
+      "quantity": 10
     },
     {
-      "bookId": 1299,
+      "bookId": 12,
       "quantity": 9
     }
   ]

@@ -1,5 +1,6 @@
 package com.bookshop.service;
 
+import static com.bookshop.controller.BookOrderController.handleError;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 import java.time.LocalDateTime;
@@ -49,6 +50,12 @@ public class OrderService {
     private final OrderDtoMapper orderDtoMapper;
     private final ItemRepository itemRepository;
 
+    private static List<Item> handleException(Throwable ex) {
+        handleError(ex);
+        log.error("Order processing exception: {}", ex.getMessage());
+        throw new RuntimeException("Order processing error: " + ex.getMessage());
+    }
+
     private static CompletableFuture<List<Item>> getListCompletableFuture(List<CompletableFuture<Item>> orderItemFutures) {
         return CompletableFuture.allOf(orderItemFutures.toArray(new CompletableFuture[0]))
                 .thenApply(v -> orderItemFutures.stream()
@@ -58,18 +65,34 @@ public class OrderService {
                 .exceptionally(OrderService::handleException);
     }
 
-    private static List<Item> handleException(Throwable ex) {
-        Throwable cause = ex.getCause();
-        if (cause instanceof ProductNotFoundException) {
-            log.error("Order processing ProductNotFoundException: {}", cause.getMessage());
-            throw (ProductNotFoundException) cause;
+    @Transactional
+    public OrderDto createOrder(BookOrderRequest bookOrderRequest) throws ExecutionException, InterruptedException {
+        List<CompletableFuture<Item>> orderItemFutures = normaliseOrderedItems(bookOrderRequest.getOrderItems())
+                .stream()
+                .map(item -> supplyAsync(() -> processBookItem(item), executorService)).toList();
+
+        CompletableFuture<List<Item>> allOrderItemsFuture = getListCompletableFuture(orderItemFutures);
+
+        return allOrderItemsFuture.thenApply(orderItems -> {
+            Order order = createNewOrder(bookOrderRequest, orderItems);
+            orderRepository.save(order);
+            return orderDtoMapper.mapOrderDto(order);
+        }).orTimeout(10, TimeUnit.SECONDS).get();
+    }
+
+    private Item processBookItem(Item item) {
+        Lock lock = bookLocks.computeIfAbsent(item.getBookId(), id -> new ReentrantLock());
+        log.info(" processing started with thread: {} for book id:{}",
+                Thread.currentThread().getName(), item.getBookId());
+        lock.lock();
+        try {
+            updateBookStock(item);
+            log.info("the book stock has been changed with thread: {}", Thread.currentThread().getName());
+        } finally {
+            lock.unlock();
+            bookLocks.remove(item.getBookId());
         }
-        if (cause instanceof InsufficientStockException) {
-            log.error("Order processing InsufficientStockException: {}", cause.getMessage());
-            throw (InsufficientStockException) cause;
-        }
-        log.error("Order processing exception: {}", ex.getMessage());
-        throw new RuntimeException("Order processing error: " + ex.getMessage());
+        return item;
     }
 
     @Transactional
@@ -169,7 +192,9 @@ public class OrderService {
     }
 
     public OrderDto getOrder(Long orderId) {
-        return orderDtoMapper.mapOrderDto(orderRepository.findById(orderId).orElseThrow());
+        return orderDtoMapper.mapOrderDto(orderRepository
+                        .findById(orderId)
+                        .orElseThrow(() -> new OrderNotFoundException("Order not found")));
     }
 
     @Transactional
@@ -181,42 +206,15 @@ public class OrderService {
         orderRepository.deleteById(orderId);
     }
 
-    @Transactional
-    public OrderDto createOrder(BookOrderRequest bookOrderRequest) throws ExecutionException, InterruptedException {
-        List<CompletableFuture<Item>> orderItemFutures = normaliseOrderedItems(bookOrderRequest.getOrderItems())
-                .stream()
-                .map(item -> supplyAsync(() -> processBookItem(item), executorService)).toList();
 
-        CompletableFuture<List<Item>> allOrderItemsFuture = getListCompletableFuture(orderItemFutures);
-
-        return allOrderItemsFuture.thenApply(orderItems -> {
-            Order order = createNewOrder(bookOrderRequest, orderItems);
-            orderRepository.save(order);
-            return orderDtoMapper.mapOrderDto(order);
-        }).orTimeout(10, TimeUnit.SECONDS).get();
-    }
-
-    private Item processBookItem(Item item) {
-        Lock lock = bookLocks.computeIfAbsent(item.getBookId(), id -> new ReentrantLock());
-        log.info(" processing started with thread: {} for book id:{}",
-                Thread.currentThread().getName(), item.getBookId());
-        lock.lock();
-        try {
-            updateBookStock(item);
-            log.info("the book stock has been changed with thread: {}", Thread.currentThread().getName());
-        } finally {
-            lock.unlock();
-            bookLocks.remove(item.getBookId());
-        }
-        return item;
-    }
 
     private Order createNewOrder(BookOrderRequest bookOrderRequest, List<Item> orderItems) {
         User user = userRepository.findById(bookOrderRequest.getUserId()).orElseThrow();
-        Order order = new Order();
-        order.setUser(user);
-        order.setOrderDate(LocalDateTime.now());
-        order.setItems(orderItems);
+        Order order = Order.builder()
+                .user(user)
+                .orderDate(LocalDateTime.now())
+                .items(orderItems)
+                .build();
         orderItems.forEach(item -> item.setOrder(order));
         return order;
     }

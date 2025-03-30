@@ -1,12 +1,12 @@
-PUT http://localhost:8080/api/order/100
+PUT http://localhost:8080/api/order/101
 Content-Type: application/json
 
 {
   "userId": 1,
   "orderItems": [
     {
-      "bookId": 25,
-      "quantity": 1000
+      "bookId": 23,
+      "quantity": 1
     }
   ]
 }
