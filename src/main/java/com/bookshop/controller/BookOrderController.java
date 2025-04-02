@@ -65,7 +65,10 @@ public class BookOrderController {
         log.info("Order with id {}  was deleted  ", id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-
+    @GetMapping("/check")
+    public ResponseEntity<String> check() {
+        return new ResponseEntity<>("hello! you are in a book shop", HttpStatus.OK);
+    }
     @PutMapping("/{id}")
     public ResponseEntity<OrderDto> updateOrder(@RequestBody BookOrderRequest orderRequest,
                                                 @PathVariable Long id) throws ExecutionException, InterruptedException {

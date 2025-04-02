@@ -1,24 +1,28 @@
-version: '3.8'
+version: '3.8'  # Specifies the Docker Compose file format version.
 
 services:
-  app:
-    image: 'docker-spring-boot-postgres:latest'
+  bookshop-app:
     build:
-      context: .
-    container_name: app
+      context: .  # Directory to build Docker image from.
+      dockerfile: Dockerfile  # Dockerfile to use for building the image.
+    ports:
+      - 8080:8080  # Maps port 8080 in the container to port 8080 on the host.
     depends_on:
-      - db
+      db:
+        condition: service_healthy  # Waits for 'db' to be healthy before starting.
     environment:
+      #      - SPRING_CONFIG_LOCATION=file:/app/application.properties  # Location of application properties.
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/bookstore
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+      - SPRING_SQL_INIT_MODE=always
 
-    ports:
-      - "8080:8080"
-
+    volumes:
+      - ./src/main/resources/application.properties:/app/application.properties  # Mounts properties file.
   db:
     image: postgres
     container_name: db
@@ -28,3 +32,8 @@ services:
       - POSTGRES_DB=bookstore
     ports:
       - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      retries: 5
+      start_period: 10s
