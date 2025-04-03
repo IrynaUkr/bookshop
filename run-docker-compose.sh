@@ -1,8 +1,4 @@
-##!/usr/bin/env bash
-#
-#  dockerComposeFile="${BASH_SOURCE%/*}/docker-compose.yml"
-#
-##!/usr/bin/env bash
+#!/usr/bin/env bash
 
 set -e  # Exit immediately if a command exits with a non-zero status.
 

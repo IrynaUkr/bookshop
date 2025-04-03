@@ -19,7 +19,7 @@ Use Case:
 - Throws an error if the timeout is exceeded.
 - Use CompletableFuture, which gives better non-blocking execution and chaining capabilities.
 
-##### 2. Fetch Book Recommendations in Parallel
+##### 2. Fetch Book Recommendations in Parallel (TBD)
   When a customer purchases a book, recommend related books. Fetching recommendations from a database
   or an external service might take time, so running this operation asynchronously improves performance.
   - Customer places an order →  create an order in the database and update stock.
@@ -28,11 +28,33 @@ Use Case:
   - If the customer updates the order, modify the existing order instead of creating a new one.
 
 
+### Running the Application Locally with PostgreSQL in Docker
 
+To run the application locally while using a PostgreSQL database inside a Docker container, follow these steps:
 
+- Create and start the PostgreSQL container:  run script located  `docker-postgres/run-db.sh`
 
+- Run the Spring Boot application:  `./mvnw spring-boot:run`
+
+- Test the application using the prepared API requests: Located in com/bookshop/controller/requests
+
+### Running the Application in Docker
+
+To run the entire application inside Docker, follow these steps:
+
+- Create and start the PostgreSQL container: run script located  `docker-postgres/run-db.sh`
+
+- Build the application (using Maven): `mvn clean package`
+
+- Run the application with Docker Compose: `bash run-docker-compose.sh`
+
+- Test the application using the prepared API requests: Located in `com/bookshop/controller/requests`
+
+##### Next Step: Publish Docker Image to Public Registry
+
+As a next step, we will publish the created Docker image to a public Docker registry.
 _______
-## Authentication
+#### Authentication (to be added)
 
 A bearer token is a type of token that's used for authorization and authentication.
 JWTs are JSON-based security tokens that contain a user's identity and access rights.

@@ -6,11 +6,11 @@ Content-Type: application/json
   "userId": 1,
   "orderItems": [
     {
-      "bookId": 11,
+      "bookId": 1,
       "quantity": 10
     },
     {
-      "bookId": 12,
+      "bookId": 2,
       "quantity": 9
     }
   ]
