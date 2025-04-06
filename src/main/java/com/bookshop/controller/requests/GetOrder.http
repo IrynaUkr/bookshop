@@ -1,1 +1,2 @@
-GET http://localhost:8080/api/order/19000
+GET http://localhost:8080/api/order/check
+Authorization:  Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJSb2JlcnQiLCJpYXQiOjE3NDM5NTQwOTEsImV4cCI6MTc0NDA0MDQ5MX0.j1qGdtP8YEoaa0hmGDN782sLmOUjEpjpxKbjHEzaE50

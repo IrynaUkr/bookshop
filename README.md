@@ -36,7 +36,8 @@ To run the application locally while using a PostgreSQL database inside a Docker
 
 - Run the Spring Boot application:  `./mvnw spring-boot:run`
 
-- Test the application using the prepared API requests: Located in com/bookshop/controller/requests
+- Test the application using the prepared API requests: Located in com/bookshop/controller/requests,
+- use `com/bookshop/controller/requests/UserLogin.http` post request to generate JWT token, and update it in the header of the other requests.
 
 ### Running the Application in Docker
 
@@ -49,12 +50,13 @@ To run the entire application inside Docker, follow these steps:
 - Run the application with Docker Compose: `bash run-docker-compose.sh`
 
 - Test the application using the prepared API requests: Located in `com/bookshop/controller/requests`
+- use `com/bookshop/controller/requests/UserLogin.http` post request to generate JWT token, and update it in the header of the other requests.
 
 ##### Next Step: Publish Docker Image to Public Registry
 
 As a next step, we will publish the created Docker image to a public Docker registry.
 _______
-#### Authentication (to be added)
+#### Authentication
 
 A bearer token is a type of token that's used for authorization and authentication.
 JWTs are JSON-based security tokens that contain a user's identity and access rights.
@@ -89,5 +91,4 @@ Importantly, the method requires a secret key, typically a byte array, for the s
 We can use the Key or SecretKey instance to convert a secret string to a secret key.
 Notably, we can pass an ordinary string as a secret key.
 However, this lacks the security guarantees and randomness of cryptographic Key or SecretKey instances.
-
 Using the SecretKey instance ensures the integrity and authenticity of JWT.

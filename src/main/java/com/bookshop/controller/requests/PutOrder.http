@@ -1,11 +1,13 @@
-PUT http://localhost:8080/api/order/101
+PUT http://localhost:8080/api/order/3
 Content-Type: application/json
+Authorization:  Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJSb2JlcnQiLCJpYXQiOjE3NDM5NTQwOTEsImV4cCI6MTc0NDA0MDQ5MX0.j1qGdtP8YEoaa0hmGDN782sLmOUjEpjpxKbjHEzaE50
+
 
 {
   "userId": 1,
   "orderItems": [
     {
-      "bookId": 23,
+      "bookId": 3,
       "quantity": 1
     }
   ]

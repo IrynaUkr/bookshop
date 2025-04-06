@@ -14,7 +14,7 @@ import com.bookshop.exception.ProductNotFoundException;
 @RestControllerAdvice
 public class ExceptionHandlerGlobal {
 
-    private static final Logger log = LoggerFactory.getLogger(ExceptionHandlerGlobal.class);
+    public static final Logger log = LoggerFactory.getLogger(ExceptionHandlerGlobal.class);
 
     @ExceptionHandler({OrderNotFoundException.class, ProductNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
